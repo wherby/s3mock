@@ -49,8 +49,13 @@ class FileProvider(dir:String) extends Provider with LazyLogging {
       case Some(del) => files.flatMap(f => commonPrefix(f.key, prefixNoLeadingSlash, del.replace("/",java.io.File.separator))).distinct.sorted
       case None => Nil
     }
-    val filteredFiles = files.filterNot(f => commonPrefixes.exists(p => f.key.startsWith(p)))
-    ListBucket(bucket, prefix, delimiter, commonPrefixes, filteredFiles.sortBy(_.key))
+    var filteredFiles = files.filterNot(f => commonPrefixes.exists(p => f.key.startsWith(p))).map{
+      case Content(key,lastModified,md5,size,storageClass)=>Content(key.replace(java.io.File.separator,"/"),lastModified,md5,size,storageClass )
+    }
+    val reCommonPrefixes= commonPrefixes.map{
+      cstr => cstr.replace(java.io.File.separator,"/")
+    }
+    ListBucket(bucket, prefix, delimiter, reCommonPrefixes, filteredFiles.sortBy(_.key))
   }
 
   override def createBucket(name:String, bucketConfig:CreateBucketConfiguration) = {

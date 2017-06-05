@@ -39,7 +39,7 @@ class ListBucketTest extends S3MockTest {
       if(isInMem){
         ol.map(_.getKey).forall(_.startsWith("one/foo")) shouldBe true
       }else{
-        ol.map(_.getKey).forall(_.startsWith("one/foo".replace("/",java.io.File.separator))) shouldBe true
+        ol.map(_.getKey).forall(_.startsWith("one/foo")) shouldBe true
       }
     }
     it should "return empty list if prefix is incorrect" in {
@@ -59,7 +59,6 @@ class ListBucketTest extends S3MockTest {
       summary.getKey shouldBe "one"
       summary.getSize shouldBe 3
       summary.getStorageClass shouldBe "STANDARD"
-
       val returnedKey = summaries.last.getKey
       s3.getObject("list4", returnedKey).getKey shouldBe "one"
     }
@@ -84,11 +83,7 @@ class ListBucketTest extends S3MockTest {
       req1.setDelimiter("/")
       val list1 = s3.listObjects(req1)
       val summaries1 = list1.getObjectSummaries.map(_.getKey).toList
-      if(isInMem){
-        list1.getCommonPrefixes.asScala.toList shouldBe List("photos/")
-      }else{
-        list1.getCommonPrefixes.asScala.toList shouldBe List("photos/".replace("/",java.io.File.separator))
-      }
+      list1.getCommonPrefixes.asScala.toList shouldBe List("photos/")
       summaries1 shouldBe List("sample.jpg")
     }
     it should "obey delimiters && prefixes v2" in {
@@ -104,12 +99,7 @@ class ListBucketTest extends S3MockTest {
       req2.setPrefix("photos/2006/")
       val list2 = s3.listObjects(req2)
       val summaries2 = list2.getObjectSummaries.map(_.getKey).toList
-      if(isInMem){
-        list2.getCommonPrefixes.asScala.toList shouldBe List("photos/2006/February/", "photos/2006/January/")
-      }else{
-        list2.getCommonPrefixes.asScala.toList shouldBe List("photos/2006/February/".replace("/",java.io.File.separator), "photos/2006/January/".replace("/",java.io.File.separator))
-      }
-
+      list2.getCommonPrefixes.asScala.toList shouldBe List("photos/2006/February/", "photos/2006/January/")
       summaries2 shouldBe Nil
     }
 
@@ -143,11 +133,7 @@ class ListBucketTest extends S3MockTest {
       req2.setPrefix("dev/")
       val list2 = s3.listObjects(req2)
       val summaries2 = list2.getObjectSummaries.map(_.getKey).toList
-      if(isInMem){
-        list2.getCommonPrefixes.asScala.toList shouldBe List("dev/someEvent/")
-      }else{
-        list2.getCommonPrefixes.asScala.toList shouldBe List("dev/someEvent/".replace("/",java.io.File.separator))
-      }
+      list2.getCommonPrefixes.asScala.toList shouldBe List("dev/someEvent/")
       summaries2 shouldBe Nil
     }
 
@@ -178,20 +164,7 @@ class ListBucketTest extends S3MockTest {
       req2.setPrefix("dev/")
       val list2 = s3.listObjects(req2)
       val summaries2 = list2.getObjectSummaries.map(_.getKey).toList
-      if(isInMem){
-        list2.getCommonPrefixes.asScala.toList shouldBe List("dev/10/",
-          "dev/20/",
-          "dev/30/",
-          "dev/40/",
-          "dev/50/")
-      }else{
-        list2.getCommonPrefixes.asScala.toList shouldBe List("dev/10/".replace("/",java.io.File.separator),
-          "dev/20/".replace("/",java.io.File.separator),
-          "dev/30/".replace("/",java.io.File.separator),
-          "dev/40/".replace("/",java.io.File.separator),
-          "dev/50/".replace("/",java.io.File.separator))
-      }
-
+      list2.getCommonPrefixes.asScala.toList shouldBe List("dev/10/", "dev/20/", "dev/30/", "dev/40/", "dev/50/")
       summaries2 shouldBe Nil
     }
 
@@ -204,11 +177,7 @@ class ListBucketTest extends S3MockTest {
       req2.setPrefix("dev/someEvent/2017/03/13/00/_SUCCESS")
       val list2  = s3.listObjects(req2)
       list2.getObjectSummaries.size shouldEqual 1
-      if(isInMem){
-        list2.getObjectSummaries.head.getKey shouldEqual "dev/someEvent/2017/03/13/00/_SUCCESS"
-      }else{
-        list2.getObjectSummaries.head.getKey shouldEqual "dev/someEvent/2017/03/13/00/_SUCCESS".replace("/",java.io.File.separator)
-      }
+      list2.getObjectSummaries.head.getKey shouldEqual "dev/someEvent/2017/03/13/00/_SUCCESS"
     }
   }
 }
