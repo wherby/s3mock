@@ -35,18 +35,18 @@ class FileProvider(dir:String) extends Provider with LazyLogging {
         case pos => Some(p + dir.substring(p.length, pos) + d)
       }
     }
-    val prefixNoLeadingSlash = prefix.getOrElse("").dropWhile(_ == '/')
+    val prefixNoLeadingSlash = prefix.getOrElse("").toString.replace("/",java.io.File.separator).dropWhile(_ == java.io.File.separatorChar)
     val bucketFile = File(s"$dir/$bucket/")
     if (!bucketFile.exists) throw NoSuchBucketException(bucket)
     val bucketFileString = bucketFile.toString
     val bucketFiles = bucketFile.listRecursively.filter(f => {
-        val fString = f.toString.drop(bucketFileString.length).dropWhile(_ == '/')
+        val fString = f.toString.drop(bucketFileString.length).dropWhile(_ == java.io.File.separatorChar)
         fString.startsWith(prefixNoLeadingSlash) && !f.isDirectory
       })
-    val files = bucketFiles.map(f => {Content(f.toString.drop(bucketFileString.length+1).dropWhile(_ == '/'), DateTime(f.lastModifiedTime.toEpochMilli), "0", f.size, "STANDARD")}).toList
+    val files = bucketFiles.map(f => {Content(f.toString.drop(bucketFileString.length+1).dropWhile(_ == java.io.File.separatorChar), DateTime(f.lastModifiedTime.toEpochMilli), "0", f.size, "STANDARD")}).toList
     logger.debug(s"listing bucket contents: ${files.map(_.key)}")
     val commonPrefixes = delimiter match {
-      case Some(del) => files.flatMap(f => commonPrefix(f.key, prefixNoLeadingSlash, del)).distinct.sorted
+      case Some(del) => files.flatMap(f => commonPrefix(f.key, prefixNoLeadingSlash, del.replace("/",java.io.File.separator))).distinct.sorted
       case None => Nil
     }
     val filteredFiles = files.filterNot(f => commonPrefixes.exists(p => f.key.startsWith(p)))
