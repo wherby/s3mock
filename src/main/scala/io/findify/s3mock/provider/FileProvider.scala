@@ -74,13 +74,14 @@ class FileProvider(dir:String) extends Provider with LazyLogging {
     objectMetadata.foreach(meta => metadataStore.put(bucket, key, meta))
   }
   override def getObject(bucket:String, key:String): GetObjectData = {
+    val msKey = key.replace("/",java.io.File.separator)
     val bucketFile = File(s"$dir/$bucket")
-    val file = File(s"$dir/$bucket/$key")
+    val file = File(s"$dir/$bucket/$msKey")
     logger.debug(s"reading object for s://$bucket/$key")
     if (!bucketFile.exists) throw NoSuchBucketException(bucket)
     if (!file.exists) throw NoSuchKeyException(bucket, key)
     if (file.isDirectory) throw NoSuchKeyException(bucket, key)
-    val meta = metadataStore.get(bucket, key)
+    val meta = metadataStore.get(bucket, msKey)
     GetObjectData(file.byteArray, meta)
   }
 
@@ -118,7 +119,8 @@ class FileProvider(dir:String) extends Provider with LazyLogging {
     val destBucketFile = File(s"$dir/$destBucket")
     if (!sourceBucketFile.exists) throw NoSuchBucketException(sourceBucket)
     if (!destBucketFile.exists) throw NoSuchBucketException(destBucket)
-    val sourceFile = File(s"$dir/$sourceBucket/$sourceKey")
+    val msSourceKey = sourceKey.replace("/",java.io.File.separator)
+    val sourceFile = File(s"$dir/$sourceBucket/$msSourceKey")
     val destFile = File(s"$dir/$destBucket/$destKey")
     destFile.createIfNotExists(createParents = true)
     sourceFile.copyTo(destFile, overwrite = true)
@@ -129,12 +131,13 @@ class FileProvider(dir:String) extends Provider with LazyLogging {
   }
 
   override def deleteObject(bucket:String, key:String): Unit = {
-    val file = File(s"$dir/$bucket/$key")
+    val msKey = key.replace("/",java.io.File.separator)
+    val file = File(s"$dir/$bucket/$msKey")
     logger.debug(s"deleting object s://$bucket/$key")
     if (!file.exists) throw NoSuchKeyException(bucket, key)
     if (!file.isDirectory) {
       file.delete()
-      metadataStore.delete(bucket, key)
+      metadataStore.delete(bucket, msKey)
     }
   }
 
