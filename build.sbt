@@ -1,12 +1,12 @@
-name := "s3mock"
+name := "s3mockforwindows"
 
-version := "0.2.2"
+version := "0.2.5"
 
 organization := "io.findify"
 
-scalaVersion := "2.12.2"
+scalaVersion := "2.11.7"
 
-crossScalaVersions := Seq("2.11.11", "2.12.2")
+crossScalaVersions := Seq("2.11.7", "2.12.2")
 
 val akkaVersion = "2.5.1"
 
@@ -33,13 +33,14 @@ parallelExecution in Test := false
 publishMavenStyle := true
 
 publishTo := {
-  val nexus = "https://oss.sonatype.org/"
+  val nexus = "https://art-bobcat.autodesk.com/"
   if (isSnapshot.value)
-    Some("snapshots" at nexus + "content/repositories/snapshots")
+    Some("Snapshots" at nexus + "artifactory/snapshots")
   else
-    Some("releases"  at nexus + "service/local/staging/deploy/maven2")
+    Some("Release" at nexus + "artifactory/releases")
 }
 
+/*
 pomExtra := (
     <scm>
       <url>git@github.com:findify/s3mock.git</url>
@@ -51,4 +52,4 @@ pomExtra := (
         <name>Roman Grebennikov</name>
         <url>http://www.dfdx.me</url>
       </developer>
-    </developers>)
+    </developers>)*/

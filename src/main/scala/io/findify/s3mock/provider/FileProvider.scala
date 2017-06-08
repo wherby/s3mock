@@ -14,8 +14,8 @@ import io.findify.s3mock.response._
 import scala.util.Random
 
 /**
-  * Created by shutty on 8/9/16.
-  */
+ * Created by shutty on 8/9/16.
+ */
 class FileProvider(dir:String) extends Provider with LazyLogging {
   val workDir = File(dir)
   if (!workDir.exists) workDir.createDirectories()
@@ -40,9 +40,9 @@ class FileProvider(dir:String) extends Provider with LazyLogging {
     if (!bucketFile.exists) throw NoSuchBucketException(bucket)
     val bucketFileString = bucketFile.toString
     val bucketFiles = bucketFile.listRecursively.filter(f => {
-        val fString = f.toString.drop(bucketFileString.length).dropWhile(_ == java.io.File.separatorChar)
-        fString.startsWith(prefixNoLeadingSlash) && !f.isDirectory
-      })
+      val fString = f.toString.drop(bucketFileString.length).dropWhile(_ == java.io.File.separatorChar)
+      fString.startsWith(prefixNoLeadingSlash) && !f.isDirectory
+    })
     val files = bucketFiles.map(f => {Content(f.toString.drop(bucketFileString.length+1).dropWhile(_ == java.io.File.separatorChar), DateTime(f.lastModifiedTime.toEpochMilli), "0", f.size, "STANDARD")}).toList
     logger.debug(s"listing bucket contents: ${files.map(_.key)}")
     val commonPrefixes = delimiter match {
@@ -81,7 +81,12 @@ class FileProvider(dir:String) extends Provider with LazyLogging {
     if (!bucketFile.exists) throw NoSuchBucketException(bucket)
     if (!file.exists) throw NoSuchKeyException(bucket, key)
     if (file.isDirectory) throw NoSuchKeyException(bucket, key)
-    val meta = metadataStore.get(bucket, msKey)
+    var meta:Option[ObjectMetadata] = None
+    try{
+      meta = metadataStore.get(bucket, msKey)
+    }catch {
+      case ex:Exception=>
+    }
     GetObjectData(file.byteArray, meta)
   }
 
