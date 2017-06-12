@@ -71,8 +71,30 @@ class FileProvider(dir:String) extends Provider with LazyLogging {
     file.createIfNotExists(createParents = true)
     logger.debug(s"writing file for s3://$bucket/$key to $dir/$bucket/$key, bytes = ${data.length}")
     file.writeByteArray(data)(OpenOptions.default)
-    objectMetadata.foreach(meta => metadataStore.put(bucket, key, meta))
+    try {
+      objectMetadata.foreach(meta => metadataStore.put(bucket, key, meta))
+    } catch {
+      case ex: Exception =>
+    }
   }
+
+  def retry[T](n: Int)(fn: => T)(msg: =>Unit = ()=>Unit): T = {
+    val r = try {
+      Some(fn)
+    } catch {
+      case e: Exception if n > 1 => None
+      case _ => logger.error("retried failed")
+        msg
+        throw new Exception("Retried and Filed")
+    }
+    r match {
+      case Some(x: T) => x
+      case None =>
+        Thread.sleep(Random.nextInt(300))
+        retry(n - 1)(fn)(msg)
+    }
+  }
+
   override def getObject(bucket:String, key:String): GetObjectData = {
     val msKey = key.replace("/",java.io.File.separator)
     val bucketFile = File(s"$dir/$bucket")
@@ -124,25 +146,37 @@ class FileProvider(dir:String) extends Provider with LazyLogging {
     val destBucketFile = File(s"$dir/$destBucket")
     if (!sourceBucketFile.exists) throw NoSuchBucketException(sourceBucket)
     if (!destBucketFile.exists) throw NoSuchBucketException(destBucket)
-    val msSourceKey = sourceKey.replace("/",java.io.File.separator)
-    val sourceFile = File(s"$dir/$sourceBucket/$msSourceKey")
+    val sourceFile = File(s"$dir/$sourceBucket/$sourceKey")
     val destFile = File(s"$dir/$destBucket/$destKey")
     destFile.createIfNotExists(createParents = true)
     sourceFile.copyTo(destFile, overwrite = true)
     logger.debug(s"Copied s3://$sourceBucket/$sourceKey to s3://$destBucket/$destKey")
-    val sourceMeta = newMeta.orElse(metadataStore.get(sourceBucket, sourceKey))
-    sourceMeta.foreach(meta => metadataStore.put(destBucket, destKey, meta))
+    try {
+      val sourceMeta = newMeta.orElse(metadataStore.get(sourceBucket, sourceKey))
+      sourceMeta.foreach(meta => metadataStore.put(destBucket, destKey, meta))
+    }
+    catch {
+      case ex: Exception =>
+    }
+
     CopyObjectResult(DateTime(sourceFile.lastModifiedTime.toEpochMilli), destFile.md5)
   }
 
   override def deleteObject(bucket:String, key:String): Unit = {
-    val msKey = key.replace("/",java.io.File.separator)
-    val file = File(s"$dir/$bucket/$msKey")
+    val file = File(s"$dir/$bucket/$key")
     logger.debug(s"deleting object s://$bucket/$key")
     if (!file.exists) throw NoSuchKeyException(bucket, key)
     if (!file.isDirectory) {
-      file.delete()
-      metadataStore.delete(bucket, msKey)
+      try{
+        file.delete()
+      }catch {
+        case ex:Exception=> logger.error("file delete: " + ex.getMessage)
+      }
+      try{
+        metadataStore.delete(bucket, key)
+      }catch {
+        case ex:Exception=>
+      }
     }
   }
 
@@ -151,7 +185,11 @@ class FileProvider(dir:String) extends Provider with LazyLogging {
     logger.debug(s"deleting bucket s://$bucket")
     if (!bucketFile.exists) throw NoSuchBucketException(bucket)
     bucketFile.delete()
-    metadataStore.remove(bucket)
+    try {
+      metadataStore.remove(bucket)
+    }catch {
+      case ex:Exception => logger.error("Delete bucket update meta failed")
+    }
   }
 
 }
