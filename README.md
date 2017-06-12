@@ -7,7 +7,7 @@ What's new for the repository for https://github.com/findify/s3mock?
 
     1.Fix path error for s3mock running in windows.
     2.Handle File lock exception when concurrent operation for get, put etc.
-    3.Add run.bat to avoid memory overflow exception when run test in windows.
+    3.Add sbt.bat to avoid memory overflow exception when run test in windows.
 
 
 s3mock is a web service implementing AWS S3 API, which can be used for local testing of your code using S3
