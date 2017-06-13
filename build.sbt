@@ -33,7 +33,7 @@ parallelExecution in Test := false
 publishMavenStyle := true
 
 publishTo := {
-  val nexus = "https://art-bobcat.autodesk.com/"
+  val nexus = "https://art-bobcat.******.com/"
   if (isSnapshot.value)
     Some("Snapshots" at nexus + "artifactory/snapshots")
   else
